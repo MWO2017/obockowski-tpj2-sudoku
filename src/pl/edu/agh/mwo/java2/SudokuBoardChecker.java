@@ -30,40 +30,38 @@ public class SudokuBoardChecker {
 		// komorki, komorka inna niz pusty lub cyfry, komorka ma wartosc poza <1,9>
 
 		// iteracja po wierszach
-		for (int wiersz = 0; wiersz < 9; wiersz++) {
-			// jesli tylko poprawnosc jest false, to porzuca dalsza prace
-			if (poprawnosc == false)
-				break;
-			// przygotowanie row do kontroli
-			Row row = sheet.getRow(wiersz);
-			// w przypadku bledu sheet nie jest poprawny
-			if (row == null) {
-				poprawnosc = false;
-				break;
-			}
-			// wewnetrzna iteracja na komorkach
-			for (int c = 0; c < 9; c++) {
-				Cell cell = row.getCell(c);
-				// w przypadku bledu cell'a, nie jest poprawny
-				if (cell == null) {
+		outer:
+			for (int wiersz = 0; wiersz < 9; wiersz++) {
+				// przygotowanie row do kontroli
+				Row row = sheet.getRow(wiersz);
+				// w przypadku bledu sheet nie jest poprawny
+				if (row == null) {
 					poprawnosc = false;
 					break;
 				}
-				CellType cellType = cell.getCellTypeEnum();
-				if (!(cellType.equals(CellType.NUMERIC) || cellType.equals(CellType.BLANK))) {
-					poprawnosc = false;
-					break;
-				}
-				// w przypadku numeric czy sa z odpowiedniego zakresu
-				if (cellType.equals(CellType.NUMERIC)) {
-					if (cell.getNumericCellValue() < 1.0 || cell.getNumericCellValue() > 9.0) {
+				// wewnetrzna iteracja na komorkach
+				for (int c = 0; c < 9; c++) {
+					Cell cell = row.getCell(c);
+					// w przypadku bledu cell'a, nie jest poprawny
+					if (cell == null) {
 						poprawnosc = false;
-						break;
+						break outer;
+					}
+					CellType cellType = cell.getCellTypeEnum();
+					if (!(cellType.equals(CellType.NUMERIC) || cellType.equals(CellType.BLANK))) {
+						poprawnosc = false;
+						break outer;
+					}
+					// w przypadku numeric czy sa z odpowiedniego zakresu
+					if (cellType.equals(CellType.NUMERIC)) {
+						if (cell.getNumericCellValue() < 1.0 || cell.getNumericCellValue() > 9.0) {
+							poprawnosc = false;
+							break outer;
+						}
 					}
 				}
+	
 			}
-
-		}
 
 		// koncowa wartosc
 		return poprawnosc;

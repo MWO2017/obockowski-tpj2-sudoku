@@ -8,6 +8,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
+@Details(currentRevision=2)
 public class App {
 
 	public static void main(String[] args) {

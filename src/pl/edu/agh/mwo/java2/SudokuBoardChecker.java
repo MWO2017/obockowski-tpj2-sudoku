@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+@Details(currentRevision=2)
 public class SudokuBoardChecker {
 
 	// skladowe

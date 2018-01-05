@@ -31,8 +31,14 @@ public class App {
 				//CWICZENIE 2: Sprawdzanie poprawnosci danych
 				boolean poprawnosc2=sbc.verifyBoard(sn);
 				// sheet number +1 dla czytelnosci (sa od zera, ale nazwane sa od 1)
-				String s1=String.format("sheet %d : poprawnosc syntaktyczna: %7b\tpoprawnosc danych: %7b\t ogolna poprawnosc: %7b", sn+1, poprawnosc, poprawnosc2, poprawnosc&poprawnosc2);
+				String s1=String.format("METODA 1, sheet %d : poprawnosc syntaktyczna: %7b\tpoprawnosc danych: %7b\t ogolna poprawnosc: %7b", sn+1, poprawnosc, poprawnosc2, poprawnosc&poprawnosc2);
 				System.out.println(s1);
+		
+				//CWICZENIE 2: Sprawdzanie poprawnosci danych
+				boolean poprawnosc2b=sbc.verifyBoard2(sn);
+				// sheet number +1 dla czytelnosci (sa od zera, ale nazwane sa od 1)
+				String s2=String.format("METODA 2, sheet %d : poprawnosc syntaktyczna: %7b\tpoprawnosc danych: %7b\t ogolna poprawnosc: %7b", sn+1, poprawnosc, poprawnosc2b, poprawnosc&poprawnosc2b);
+				System.out.println(s2);
 			}
 
 		} catch (EncryptedDocumentException | InvalidFormatException | IOException e) {

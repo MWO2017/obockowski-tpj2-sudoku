@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-@Details(currentRevision=2)
+@Details(currentRevision = 3)
 public class SudokuBoardChecker {
 
 	// skladowe
@@ -31,38 +31,37 @@ public class SudokuBoardChecker {
 		// komorki, komorka inna niz pusty lub cyfry, komorka ma wartosc poza <1,9>
 
 		// iteracja po wierszach
-		outer:
-			for (int wiersz = 0; wiersz < 9; wiersz++) {
-				// przygotowanie row do kontroli
-				Row row = sheet.getRow(wiersz);
-				// w przypadku bledu sheet nie jest poprawny
-				if (row == null) {
-					poprawnosc = false;
-					break;
-				}
-				// wewnetrzna iteracja na komorkach
-				for (int c = 0; c < 9; c++) {
-					Cell cell = row.getCell(c);
-					// w przypadku bledu cell'a, nie jest poprawny
-					if (cell == null) {
-						poprawnosc = false;
-						break outer;
-					}
-					CellType cellType = cell.getCellTypeEnum();
-					if (!(cellType.equals(CellType.NUMERIC) || cellType.equals(CellType.BLANK))) {
-						poprawnosc = false;
-						break outer;
-					}
-					// w przypadku numeric czy sa z odpowiedniego zakresu
-					if (cellType.equals(CellType.NUMERIC)) {
-						if (cell.getNumericCellValue() < 1.0 || cell.getNumericCellValue() > 9.0) {
-							poprawnosc = false;
-							break outer;
-						}
-					}
-				}
-	
+		outer: for (int wiersz = 0; wiersz < 9; wiersz++) {
+			// przygotowanie row do kontroli
+			Row row = sheet.getRow(wiersz);
+			// w przypadku bledu sheet nie jest poprawny
+			if (row == null) {
+				poprawnosc = false;
+				break;
 			}
+			// wewnetrzna iteracja na komorkach
+			for (int c = 0; c < 9; c++) {
+				Cell cell = row.getCell(c);
+				// w przypadku bledu cell'a, nie jest poprawny
+				if (cell == null) {
+					poprawnosc = false;
+					break outer;
+				}
+				CellType cellType = cell.getCellTypeEnum();
+				if (!(cellType.equals(CellType.NUMERIC) || cellType.equals(CellType.BLANK))) {
+					poprawnosc = false;
+					break outer;
+				}
+				// w przypadku numeric czy sa z odpowiedniego zakresu
+				if (cellType.equals(CellType.NUMERIC)) {
+					if (cell.getNumericCellValue() < 1.0 || cell.getNumericCellValue() > 9.0) {
+						poprawnosc = false;
+						break outer;
+					}
+				}
+			}
+
+		}
 
 		// koncowa wartosc
 		return poprawnosc;
@@ -86,65 +85,12 @@ public class SudokuBoardChecker {
 		Sheet sheet = this.wb.getSheetAt(sheetIndex);
 
 		// najpierw pobranie planszy
-		ArrayList<ArrayList<Cell>> listaWierszy = new ArrayList<ArrayList<Cell>>();
-		for (int wiersz = 0; wiersz < 9; wiersz++) {
-			// initializacja nested ArrayList
-			listaWierszy.add(new ArrayList<Cell>());
-			// pobranie wiersza
-			Row row = sheet.getRow(wiersz);
-			for (int komorka = 0; komorka < 9; komorka++) {
-				Cell cell = row.getCell(komorka);
-				listaWierszy.get(wiersz).add(cell);
-			}
+		ArrayList<ArrayList<Cell>> listaWierszy = getBoard(sheet);
+		poprawnoscWierszy = verifyRows(listaWierszy);
 
-		}
-		// 1. sprawdzenie poprawnosci wierszy
-		// pobieramy z kazdego wiersza wartosc i zapisujemy do ArrayList oraz HasSet
-		// na koniec porownujemy wielkosc dwoch collection, jak jest rozny, to
-		// poprawnoscWierszy false i break
+		poprawnoscKolumn = verifyRows(listaWierszy);
 
-		for (ArrayList<Cell> element : listaWierszy) {
-			// warunek na cel dalszego sprawdzania
-			if (poprawnoscWierszy == false)
-				break;
-			ArrayList<Double> lista = new ArrayList<Double>();
-			HashSet<Double> zbior = new HashSet<Double>();
-			for (Cell c : element) {
-				CellType cellType = c.getCellTypeEnum();
-				if (cellType.equals(CellType.NUMERIC)) {
-					double value = c.getNumericCellValue();
-					lista.add(value);
-					zbior.add(value);
-				}
-			}
-			// porownanie czy sa powtorzenia
-			if (lista.size() != zbior.size())
-				poprawnoscWierszy = false;
-		}
-
-		// 2. sprawdzenie poprawnosci kolumn
-		for (int kolumna = 0; kolumna < 9; kolumna++) {
-			// warunek na cel dalszego sprawdzania
-			if (poprawnoscKolumn == false)
-				break;
-			// collections do porownania
-			ArrayList<Double> listaKolumn = new ArrayList<Double>();
-			HashSet<Double> zbiorKolumn = new HashSet<Double>();
-			// dla i kolumn od 0 do 9 kolumn pobierz wszystkie wiersze, pobierz z nich
-			// element Cell pod indeksem i i zapisz do List i Set
-			for (ArrayList<Cell> element : listaWierszy) {
-				Cell c = element.get(kolumna);
-				CellType cellType = c.getCellTypeEnum();
-				if (cellType.equals(CellType.NUMERIC)) {
-					double value = c.getNumericCellValue();
-					listaKolumn.add(value);
-					zbiorKolumn.add(value);
-				}
-				// porownanie czy sa powtorzenia
-				if (listaKolumn.size() != zbiorKolumn.size())
-					poprawnoscWierszy = false;
-			}
-		}
+		poprawnoscKwadratow = verifySquares(listaWierszy);
 
 		// 3. sprawdzenie poprawnosci kwadratow
 		for (int w = 0; w < 9; w += 3) {
@@ -181,5 +127,113 @@ public class SudokuBoardChecker {
 		}
 
 		return (poprawnoscWierszy && poprawnoscKolumn && poprawnoscKwadratow);
+	}
+
+	public boolean verifyRows(ArrayList<ArrayList<Cell>> wiersze) {
+		// 1. sprawdzenie poprawnosci wierszy
+		// pobieramy z kazdego wiersza wartosc i zapisujemy do ArrayList oraz HasSet
+		// na koniec porownujemy wielkosc dwoch collection, jak jest rozny, to
+		// poprawnoscWierszy false i break
+		boolean poprawnoscWierszy = true;
+		for (ArrayList<Cell> element : wiersze) {
+			// warunek na cel dalszego sprawdzania
+			if (poprawnoscWierszy == false)
+				break;
+			ArrayList<Double> lista = new ArrayList<Double>();
+			HashSet<Double> zbior = new HashSet<Double>();
+			for (Cell c : element) {
+				CellType cellType = c.getCellTypeEnum();
+				if (cellType.equals(CellType.NUMERIC)) {
+					double value = c.getNumericCellValue();
+					lista.add(value);
+					zbior.add(value);
+				}
+			}
+			// porownanie czy sa powtorzenia
+			if (lista.size() != zbior.size())
+				poprawnoscWierszy = false;
+		}
+		return poprawnoscWierszy;
+	}
+
+	public boolean verifyColumns(ArrayList<ArrayList<Cell>> wiersze) {
+		// 2. sprawdzenie poprawnosci kolumn
+		boolean poprawnoscKolumn = true;
+		for (int kolumna = 0; kolumna < 9; kolumna++) {
+			// warunek na cel dalszego sprawdzania
+			if (poprawnoscKolumn == false)
+				break;
+			// collections do porownania
+			ArrayList<Double> listaKolumn = new ArrayList<Double>();
+			HashSet<Double> zbiorKolumn = new HashSet<Double>();
+			// dla i kolumn od 0 do 9 kolumn pobierz wszystkie wiersze, pobierz z nich
+			// element Cell pod indeksem i i zapisz do List i Set
+			for (ArrayList<Cell> element : wiersze) {
+				Cell c = element.get(kolumna);
+				CellType cellType = c.getCellTypeEnum();
+				if (cellType.equals(CellType.NUMERIC)) {
+					double value = c.getNumericCellValue();
+					listaKolumn.add(value);
+					zbiorKolumn.add(value);
+				}
+				// porownanie czy sa powtorzenia
+				if (listaKolumn.size() != zbiorKolumn.size())
+					poprawnoscKolumn = false;
+			}
+		}
+		return poprawnoscKolumn;
+	}
+
+	public boolean verifySquares(ArrayList<ArrayList<Cell>> wiersze) {
+		boolean poprawnoscKwadratow = true;
+		// 3. sprawdzenie poprawnosci kwadratow
+		for (int w = 0; w < 9; w += 3) {
+			// warunek na cel dalszego sprawdzania
+			if (poprawnoscKwadratow == false)
+				break;
+			for (int k = 0; k < 9; k += 3) {
+				// warunek na cel dalszego sprawdzania
+				if (poprawnoscKwadratow == false)
+					break;
+				// rozpatrujemy tutaj konkretny kwardrat
+				ArrayList<Double> listaKwadrat = new ArrayList<Double>();
+				HashSet<Double> zbiorKwadrat = new HashSet<Double>();
+				for (int i = 0; i < 3; i++) {
+					for (int j = 0; j < 3; j++) {
+						// dla celow testowania
+						// String s=String.format("kwadrat: (%d,%d)\t wiersz: %d, kolumna: %d", w, k,
+						// w+i, k+j);
+						// System.out.println(s);
+						Cell c = wiersze.get(w + i).get(k + j);
+						CellType cellType = c.getCellTypeEnum();
+						if (cellType.equals(CellType.NUMERIC)) {
+							double value = c.getNumericCellValue();
+							listaKwadrat.add(value);
+							zbiorKwadrat.add(value);
+						}
+					}
+				}
+				// porownanie czy sa powtorzenia
+				if (listaKwadrat.size() != zbiorKwadrat.size()) {
+					poprawnoscKwadratow = false;
+				}
+			}
+		}
+		return poprawnoscKwadratow;
+	}
+
+	public ArrayList<ArrayList<Cell>> getBoard(Sheet sheet) {
+		ArrayList<ArrayList<Cell>> listaWierszy = new ArrayList<ArrayList<Cell>>();
+		for (int wiersz = 0; wiersz < 9; wiersz++) {
+			// initializacja nested ArrayList
+			listaWierszy.add(new ArrayList<Cell>());
+			// pobranie wiersza
+			Row row = sheet.getRow(wiersz);
+			for (int komorka = 0; komorka < 9; komorka++) {
+				Cell cell = row.getCell(komorka);
+				listaWierszy.get(wiersz).add(cell);
+			}
+		}
+		return listaWierszy;
 	}
 }

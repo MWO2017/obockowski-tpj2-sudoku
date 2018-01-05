@@ -161,31 +161,34 @@ public class SudokuBoardChecker {
 				// warunek na cel dalszego sprawdzania
 				if (poprawnoscKwadratow == false)
 					break;
-				// rozpatrujemy tutaj konkretny kwardrat
-				ArrayList<Double> listaKwadrat = new ArrayList<Double>();
-				HashSet<Double> zbiorKwadrat = new HashSet<Double>();
-				for (int i = 0; i < 3; i++) {
-					for (int j = 0; j < 3; j++) {
-						// dla celow testowania
-						// String s=String.format("kwadrat: (%d,%d)\t wiersz: %d, kolumna: %d", w, k,
-						// w+i, k+j);
-						// System.out.println(s);
-						Cell c = tablicaKomorek[w + i][k + j];
-						CellType cellType = c.getCellTypeEnum();
-						if (cellType.equals(CellType.NUMERIC)) {
-							double value = c.getNumericCellValue();
-							listaKwadrat.add(value);
-							zbiorKwadrat.add(value);
-						}
-					}
-				}
-				// porownanie czy sa powtorzenia
-				if (listaKwadrat.size() != zbiorKwadrat.size()) {
-					poprawnoscKwadratow = false;
-				}
+				// rozpatrujemy tutaj konkretny
+				poprawnoscKwadratow = checkSmallSquare(tablicaKomorek, w, k);
 			}
 		}
 		return poprawnoscKwadratow;
+	}
+
+	public boolean checkSmallSquare(Cell[][] board, int w, int k) {
+		boolean poprawnoscKwadrata = true;
+		// rozpatrujemy tutaj konkretny kwardrat
+		ArrayList<Double> listaKwadrat = new ArrayList<Double>();
+		HashSet<Double> zbiorKwadrat = new HashSet<Double>();
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				Cell c = board[w + i][k + j];
+				CellType cellType = c.getCellTypeEnum();
+				if (cellType.equals(CellType.NUMERIC)) {
+					double value = c.getNumericCellValue();
+					listaKwadrat.add(value);
+					zbiorKwadrat.add(value);
+				}
+			}
+		}
+		// porownanie czy sa powtorzenia
+		if (listaKwadrat.size() != zbiorKwadrat.size()) {
+			poprawnoscKwadrata = false;
+		}
+		return poprawnoscKwadrata;
 	}
 
 	public Cell[][] getBoard(Sheet sheet) {

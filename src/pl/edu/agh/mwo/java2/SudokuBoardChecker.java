@@ -85,63 +85,29 @@ public class SudokuBoardChecker {
 		Sheet sheet = this.wb.getSheetAt(sheetIndex);
 
 		// najpierw pobranie planszy
-		ArrayList<ArrayList<Cell>> listaWierszy = getBoard(sheet);
+		Cell[][] listaWierszy = getBoard(sheet);
 		poprawnoscWierszy = verifyRows(listaWierszy);
 
 		poprawnoscKolumn = verifyRows(listaWierszy);
 
 		poprawnoscKwadratow = verifySquares(listaWierszy);
 
-		// 3. sprawdzenie poprawnosci kwadratow
-		for (int w = 0; w < 9; w += 3) {
-			// warunek na cel dalszego sprawdzania
-			if (poprawnoscKwadratow == false)
-				break;
-			for (int k = 0; k < 9; k += 3) {
-				// warunek na cel dalszego sprawdzania
-				if (poprawnoscKwadratow == false)
-					break;
-				// rozpatrujemy tutaj konkretny kwardrat
-				ArrayList<Double> listaKwadrat = new ArrayList<Double>();
-				HashSet<Double> zbiorKwadrat = new HashSet<Double>();
-				for (int i = 0; i < 3; i++) {
-					for (int j = 0; j < 3; j++) {
-						// dla celow testowania
-						// String s=String.format("kwadrat: (%d,%d)\t wiersz: %d, kolumna: %d", w, k,
-						// w+i, k+j);
-						// System.out.println(s);
-						Cell c = listaWierszy.get(w + i).get(k + j);
-						CellType cellType = c.getCellTypeEnum();
-						if (cellType.equals(CellType.NUMERIC)) {
-							double value = c.getNumericCellValue();
-							listaKwadrat.add(value);
-							zbiorKwadrat.add(value);
-						}
-					}
-				}
-				// porownanie czy sa powtorzenia
-				if (listaKwadrat.size() != zbiorKwadrat.size()) {
-					poprawnoscKwadratow = false;
-				}
-			}
-		}
-
 		return (poprawnoscWierszy && poprawnoscKolumn && poprawnoscKwadratow);
 	}
 
-	public boolean verifyRows(ArrayList<ArrayList<Cell>> wiersze) {
+	public boolean verifyRows(Cell[][] tablicaKomorek) {
 		// 1. sprawdzenie poprawnosci wierszy
 		// pobieramy z kazdego wiersza wartosc i zapisujemy do ArrayList oraz HasSet
 		// na koniec porownujemy wielkosc dwoch collection, jak jest rozny, to
 		// poprawnoscWierszy false i break
 		boolean poprawnoscWierszy = true;
-		for (ArrayList<Cell> element : wiersze) {
+		for (Cell[] tablica : tablicaKomorek) {
 			// warunek na cel dalszego sprawdzania
 			if (poprawnoscWierszy == false)
 				break;
 			ArrayList<Double> lista = new ArrayList<Double>();
 			HashSet<Double> zbior = new HashSet<Double>();
-			for (Cell c : element) {
+			for (Cell c : tablica) {
 				CellType cellType = c.getCellTypeEnum();
 				if (cellType.equals(CellType.NUMERIC)) {
 					double value = c.getNumericCellValue();
@@ -156,7 +122,7 @@ public class SudokuBoardChecker {
 		return poprawnoscWierszy;
 	}
 
-	public boolean verifyColumns(ArrayList<ArrayList<Cell>> wiersze) {
+	public boolean verifyColumns(Cell[][] tablicaKomorek) {
 		// 2. sprawdzenie poprawnosci kolumn
 		boolean poprawnoscKolumn = true;
 		for (int kolumna = 0; kolumna < 9; kolumna++) {
@@ -168,8 +134,8 @@ public class SudokuBoardChecker {
 			HashSet<Double> zbiorKolumn = new HashSet<Double>();
 			// dla i kolumn od 0 do 9 kolumn pobierz wszystkie wiersze, pobierz z nich
 			// element Cell pod indeksem i i zapisz do List i Set
-			for (ArrayList<Cell> element : wiersze) {
-				Cell c = element.get(kolumna);
+			for (Cell[] element : tablicaKomorek) {
+				Cell c = element[kolumna];
 				CellType cellType = c.getCellTypeEnum();
 				if (cellType.equals(CellType.NUMERIC)) {
 					double value = c.getNumericCellValue();
@@ -184,7 +150,7 @@ public class SudokuBoardChecker {
 		return poprawnoscKolumn;
 	}
 
-	public boolean verifySquares(ArrayList<ArrayList<Cell>> wiersze) {
+	public boolean verifySquares(Cell[][] tablicaKomorek) {
 		boolean poprawnoscKwadratow = true;
 		// 3. sprawdzenie poprawnosci kwadratow
 		for (int w = 0; w < 9; w += 3) {
@@ -195,45 +161,45 @@ public class SudokuBoardChecker {
 				// warunek na cel dalszego sprawdzania
 				if (poprawnoscKwadratow == false)
 					break;
-				// rozpatrujemy tutaj konkretny kwardrat
-				ArrayList<Double> listaKwadrat = new ArrayList<Double>();
-				HashSet<Double> zbiorKwadrat = new HashSet<Double>();
-				for (int i = 0; i < 3; i++) {
-					for (int j = 0; j < 3; j++) {
-						// dla celow testowania
-						// String s=String.format("kwadrat: (%d,%d)\t wiersz: %d, kolumna: %d", w, k,
-						// w+i, k+j);
-						// System.out.println(s);
-						Cell c = wiersze.get(w + i).get(k + j);
-						CellType cellType = c.getCellTypeEnum();
-						if (cellType.equals(CellType.NUMERIC)) {
-							double value = c.getNumericCellValue();
-							listaKwadrat.add(value);
-							zbiorKwadrat.add(value);
-						}
-					}
-				}
-				// porownanie czy sa powtorzenia
-				if (listaKwadrat.size() != zbiorKwadrat.size()) {
-					poprawnoscKwadratow = false;
-				}
+				// rozpatrujemy tutaj konkretny
+				poprawnoscKwadratow = checkSmallSquare(tablicaKomorek, w, k);
 			}
 		}
 		return poprawnoscKwadratow;
 	}
 
-	public ArrayList<ArrayList<Cell>> getBoard(Sheet sheet) {
-		ArrayList<ArrayList<Cell>> listaWierszy = new ArrayList<ArrayList<Cell>>();
+	public boolean checkSmallSquare(Cell[][] board, int w, int k) {
+		boolean poprawnoscKwadrata = true;
+		// rozpatrujemy tutaj konkretny kwardrat
+		ArrayList<Double> listaKwadrat = new ArrayList<Double>();
+		HashSet<Double> zbiorKwadrat = new HashSet<Double>();
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				Cell c = board[w + i][k + j];
+				CellType cellType = c.getCellTypeEnum();
+				if (cellType.equals(CellType.NUMERIC)) {
+					double value = c.getNumericCellValue();
+					listaKwadrat.add(value);
+					zbiorKwadrat.add(value);
+				}
+			}
+		}
+		// porownanie czy sa powtorzenia
+		if (listaKwadrat.size() != zbiorKwadrat.size()) {
+			poprawnoscKwadrata = false;
+		}
+		return poprawnoscKwadrata;
+	}
+
+	public Cell[][] getBoard(Sheet sheet) {
+		Cell[][] tablicaKomorek = new Cell[9][9];
 		for (int wiersz = 0; wiersz < 9; wiersz++) {
-			// initializacja nested ArrayList
-			listaWierszy.add(new ArrayList<Cell>());
-			// pobranie wiersza
 			Row row = sheet.getRow(wiersz);
 			for (int komorka = 0; komorka < 9; komorka++) {
 				Cell cell = row.getCell(komorka);
-				listaWierszy.get(wiersz).add(cell);
+				tablicaKomorek[wiersz][komorka] = cell;
 			}
 		}
-		return listaWierszy;
+		return tablicaKomorek;
 	}
 }
